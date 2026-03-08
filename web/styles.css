@@ -51,6 +51,31 @@ body {
   gap: 0.5rem;
 }
 
+.badge {
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.badge-idle {
+  background: #f4f5f8;
+  color: #505b6e;
+}
+
+.badge-ok {
+  background: #edf8f0;
+  color: #215d35;
+  border-color: #b8e2c3;
+}
+
+.badge-active {
+  background: #fff3e7;
+  color: #7a4300;
+  border-color: #ffd7ab;
+}
+
 .model-wrap input {
   width: 230px;
 }

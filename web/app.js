@@ -9,6 +9,7 @@ const loadProfileEl = document.getElementById("loadProfile");
 const clearChatEl = document.getElementById("clearChat");
 const profileDialogEl = document.getElementById("profileDialog");
 const profilePreviewEl = document.getElementById("profilePreview");
+const compactionBadgeEl = document.getElementById("compactionBadge");
 
 const messages = [];
 const defaultSystemPrompt = `You are an adaptive tutor.
@@ -113,6 +114,26 @@ function renderMessage(role, content) {
   }
 }
 
+function updateCompactionBadge(meta) {
+  if (!compactionBadgeEl || !meta) return;
+  const profile = Boolean(meta.profile_compacted);
+  const convo = Boolean(meta.conversation_compacted);
+  const used = Number(meta.context_chars || 0);
+  const max = Number(meta.max_context_chars || 0);
+
+  if (!profile && !convo) {
+    compactionBadgeEl.textContent = `Compaction: off (${used}/${max})`;
+    compactionBadgeEl.className = "badge badge-ok";
+    return;
+  }
+
+  const parts = [];
+  if (convo) parts.push("chat");
+  if (profile) parts.push("profile");
+  compactionBadgeEl.textContent = `Compaction: ${parts.join(" + ")} (${used}/${max})`;
+  compactionBadgeEl.className = "badge badge-active";
+}
+
 async function sendMessage() {
   const prompt = promptEl.value.trim();
   if (!prompt) return;
@@ -152,6 +173,7 @@ async function sendMessage() {
     const content = (data.content || "").trim();
     messages.push({ role: "assistant", content });
     renderMessage("assistant", content || "(No response content)");
+    updateCompactionBadge(data.meta);
   } catch (err) {
     pending.remove();
     renderMessage("assistant", `Error: ${err.message}`);
@@ -166,6 +188,10 @@ composerEl.addEventListener("submit", (event) => {
 clearChatEl.addEventListener("click", () => {
   messages.length = 0;
   chatEl.innerHTML = "";
+  if (compactionBadgeEl) {
+    compactionBadgeEl.textContent = "Compaction: n/a";
+    compactionBadgeEl.className = "badge badge-idle";
+  }
 });
 
 loadProfileEl.addEventListener("click", async () => {

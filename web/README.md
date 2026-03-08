@@ -19,6 +19,7 @@ Then open:
   - keeps recent turns
   - summarizes older turns into a system memory note
   - slices profile context to high-priority sections
+- Shows a top-bar badge with compaction status from the last response.
 - Prefills the chat with a default adaptive tutoring system prompt aligned to the session workflow.
 - Supports model tool-calling with `recommend_youtube_videos` for extra learning resources.
 - Tool use can be toggled in UI (`Enable model tools`).
