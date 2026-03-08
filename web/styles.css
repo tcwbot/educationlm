@@ -1,0 +1,222 @@
+:root {
+  --bg: #f5f7fb;
+  --panel: #ffffff;
+  --ink: #101826;
+  --muted: #5b677d;
+  --border: #d6dce8;
+  --accent: #145ea8;
+  --accent-2: #0f4d88;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  color: var(--ink);
+  background: radial-gradient(circle at 10% 10%, #e8f0ff 0, transparent 32%), var(--bg);
+}
+
+.app {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1rem;
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 0.75rem;
+}
+
+.topbar {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.topbar h1 {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.model-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.model-wrap input {
+  width: 230px;
+}
+
+input,
+textarea,
+button {
+  font: inherit;
+}
+
+input,
+textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.55rem 0.65rem;
+}
+
+.chat {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1rem;
+  overflow-y: auto;
+  min-height: 45vh;
+  max-height: 60vh;
+}
+
+.msg {
+  margin-bottom: 0.9rem;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.msg .role {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.msg .bubble {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.65rem 0.75rem;
+}
+
+.msg.user .bubble {
+  background: #e9f4ff;
+  border-color: #b7d8ff;
+}
+
+.msg.assistant .bubble {
+  background: #fffdf8;
+}
+
+.msg.assistant .bubble p,
+.msg.assistant .bubble ul,
+.msg.assistant .bubble ol,
+.msg.assistant .bubble pre,
+.msg.assistant .bubble h1,
+.msg.assistant .bubble h2,
+.msg.assistant .bubble h3,
+.msg.assistant .bubble h4,
+.msg.assistant .bubble h5,
+.msg.assistant .bubble h6 {
+  margin: 0.45rem 0;
+}
+
+.msg.assistant .bubble ul,
+.msg.assistant .bubble ol {
+  padding-left: 1.2rem;
+}
+
+.msg.assistant .bubble code {
+  background: #eef3fb;
+  border-radius: 6px;
+  padding: 0.05rem 0.3rem;
+  font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
+}
+
+.msg.assistant .bubble pre {
+  background: #0d1b2a;
+  color: #e9f2ff;
+  border-radius: 10px;
+  padding: 0.6rem 0.7rem;
+  overflow-x: auto;
+}
+
+.msg.assistant .bubble pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+.msg.assistant .bubble a {
+  color: #0b4b87;
+}
+
+.controls {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.8rem;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.row {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.row-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.composer {
+  display: grid;
+  gap: 0.5rem;
+}
+
+button {
+  background: var(--accent);
+  color: #fff;
+  border: 0;
+  border-radius: 10px;
+  padding: 0.5rem 0.8rem;
+  cursor: pointer;
+}
+
+button:hover {
+  background: var(--accent-2);
+}
+
+#profileDialog {
+  width: min(900px, 95vw);
+}
+
+#profilePreview {
+  max-height: 60vh;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.7rem;
+  background: #fbfcff;
+}
+
+@media (max-width: 720px) {
+  .model-wrap {
+    width: 100%;
+  }
+
+  .model-wrap input {
+    width: 100%;
+  }
+
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

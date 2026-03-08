@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EducationLM Chat</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [["\\(", "\\)"], ["$", "$"]],
+          displayMath: [["\\[", "\\]"], ["$$", "$$"]],
+        },
+        options: {
+          skipHtmlTags: ["script", "noscript", "style", "textarea", "pre", "code"],
+        },
+      };
+    </script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+    ></script>
+  </head>
+  <body>
+    <main class="app">
+      <header class="topbar">
+        <h1>EducationLM Chat</h1>
+        <div class="model-wrap">
+          <label for="model">Model</label>
+          <input id="model" value="granite4:7b-a1b-h" />
+        </div>
+      </header>
+
+      <section id="chat" class="chat" aria-live="polite"></section>
+
+      <section class="controls">
+        <div class="row">
+          <label for="systemPrompt">System prompt</label>
+          <textarea id="systemPrompt" rows="2" placeholder="Optional system instruction"></textarea>
+        </div>
+        <div class="row row-inline">
+          <label class="check">
+            <input id="includeProfile" type="checkbox" checked />
+            Include profile.md context
+          </label>
+          <label class="check">
+            <input id="enableTools" type="checkbox" checked />
+            Enable model tools (YouTube recommender)
+          </label>
+          <button id="loadProfile" type="button">Preview profile</button>
+          <button id="clearChat" type="button">Clear</button>
+        </div>
+        <form id="composer" class="composer">
+          <textarea id="prompt" rows="3" placeholder="Ask your question..." required></textarea>
+          <button id="send" type="submit">Send</button>
+        </form>
+      </section>
+
+      <dialog id="profileDialog">
+        <h2>profile.md preview</h2>
+        <pre id="profilePreview"></pre>
+        <form method="dialog">
+          <button>Close</button>
+        </form>
+      </dialog>
+    </main>
+
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>
