@@ -9,6 +9,7 @@ Local adaptive tutoring chat app powered by Ollama (`granite4:7b-a1b-h`) with:
 ## Project Structure
 - `profile.md`: active student memory profile (persistent).
 - `web/`: local web chat UI + backend server.
+- `tools/`: local tool implementations (for example, YouTube recommender).
 - `docs/`: workflow and templates.
 
 ## Quick Start
@@ -23,6 +24,12 @@ python3 web/server.py
 ```
 4. Open:
 - `http://127.0.0.1:8787`
+
+## Tests
+Run recommender tests:
+```bash
+python3 -m unittest -v tests/test_youtube_recommender.py
+```
 
 ## Core Features
 - Adaptive tutoring via system prompt + student profile context.

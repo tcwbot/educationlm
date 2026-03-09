@@ -29,6 +29,15 @@ body {
   gap: 0.75rem;
 }
 
+.view {
+  display: none;
+}
+
+.view-active {
+  display: grid;
+  gap: 0.75rem;
+}
+
 .topbar {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -43,6 +52,34 @@ body {
 .topbar h1 {
   font-size: 1.1rem;
   margin: 0;
+}
+
+.view-switch {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #f6f8fc;
+  padding: 0.15rem;
+  gap: 0.15rem;
+}
+
+.view-btn {
+  background: transparent;
+  color: #33435f;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  line-height: 1;
+}
+
+.view-btn:hover {
+  background: #e9effa;
+  color: #23324d;
+}
+
+.view-btn-active {
+  background: #dbe9ff;
+  color: #123f75;
 }
 
 .model-wrap {
@@ -87,7 +124,8 @@ button {
 }
 
 input,
-textarea {
+textarea,
+select {
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -104,6 +142,51 @@ textarea {
   max-height: 60vh;
 }
 
+.viz {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.9rem;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.viz-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.viz-head h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.viz-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.6rem;
+  background: #fcfdff;
+}
+
+.card h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+}
+
+.card svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
 .msg {
   margin-bottom: 0.9rem;
   display: grid;
@@ -113,6 +196,9 @@ textarea {
 .msg .role {
   color: var(--muted);
   font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
 }
 
 .msg .bubble {
@@ -180,6 +266,10 @@ textarea {
   padding: 0.8rem;
   display: grid;
   gap: 0.6rem;
+  position: sticky;
+  bottom: 0.5rem;
+  z-index: 4;
+  box-shadow: 0 8px 20px rgba(16, 24, 38, 0.08);
 }
 
 .row {
@@ -203,6 +293,66 @@ textarea {
 .composer {
   display: grid;
   gap: 0.5rem;
+}
+
+.composer-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.secondary-btn {
+  background: #e8edf7;
+  color: #1f3556;
+}
+
+.secondary-btn:hover {
+  background: #d9e3f4;
+}
+
+.secondary-btn.mic-active {
+  background: #ffdfe2;
+  color: #7b1f2b;
+}
+
+.mic-status {
+  font-size: 0.85rem;
+  color: #4f5f78;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+}
+
+#ttsVoice {
+  min-width: 220px;
+  width: auto;
+}
+
+#ttsRate,
+#ttsPitch {
+  width: 120px;
+}
+
+#ttsRateValue,
+#ttsPitchValue {
+  min-width: 2.2rem;
+  color: #4f5f78;
+  font-size: 0.85rem;
+}
+
+.tiny-btn {
+  background: #e8edf7;
+  color: #1f3556;
+  border: 0;
+  border-radius: 8px;
+  padding: 0.2rem 0.45rem;
+  font-size: 0.72rem;
+  line-height: 1.1;
+}
+
+.tiny-btn:hover {
+  background: #d9e3f4;
 }
 
 button {
@@ -243,5 +393,22 @@ button:hover {
   .topbar {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .viz-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .controls {
+    bottom: 0;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .composer-actions {
+    flex-wrap: wrap;
+  }
+
+  .mic-status {
+    max-width: 100%;
   }
 }

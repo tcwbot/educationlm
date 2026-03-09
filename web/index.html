@@ -20,11 +20,23 @@
       defer
       src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
     ></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
   </head>
   <body>
     <main class="app">
       <header class="topbar">
         <h1>EducationLM Chat</h1>
+        <div class="view-switch" role="tablist" aria-label="Main views">
+          <button id="showChatView" class="view-btn view-btn-active" type="button" role="tab" aria-selected="true">
+            Chat
+          </button>
+          <button id="showTrajectoryView" class="view-btn" type="button" role="tab" aria-selected="false">
+            Trajectory
+          </button>
+          <button id="showPromptView" class="view-btn" type="button" role="tab" aria-selected="false">
+            Prompt
+          </button>
+        </div>
         <div id="compactionBadge" class="badge badge-idle" title="Compaction status for last response">
           Compaction: n/a
         </div>
@@ -34,29 +46,77 @@
         </div>
       </header>
 
-      <section id="chat" class="chat" aria-live="polite"></section>
+      <section id="chatView" class="view view-active">
+        <section id="chat" class="chat" aria-live="polite"></section>
 
-      <section class="controls">
-        <div class="row">
-          <label for="systemPrompt">System prompt</label>
-          <textarea id="systemPrompt" rows="2" placeholder="Optional system instruction"></textarea>
-        </div>
-        <div class="row row-inline">
-          <label class="check">
-            <input id="includeProfile" type="checkbox" checked />
-            Include profile.md context
-          </label>
-          <label class="check">
-            <input id="enableTools" type="checkbox" checked />
-            Enable model tools (YouTube recommender)
-          </label>
-          <button id="loadProfile" type="button">Preview profile</button>
-          <button id="clearChat" type="button">Clear</button>
-        </div>
-        <form id="composer" class="composer">
-          <textarea id="prompt" rows="3" placeholder="Ask your question..." required></textarea>
-          <button id="send" type="submit">Send</button>
-        </form>
+        <section class="controls">
+          <form id="composer" class="composer">
+            <textarea id="prompt" rows="3" placeholder="Ask your question..." required></textarea>
+            <div class="composer-actions">
+              <button id="micBtn" type="button" class="secondary-btn">Start Mic</button>
+              <div id="micStatus" class="mic-status" aria-live="polite">Mic: idle</div>
+              <label class="check">
+                <input id="autoSpeak" type="checkbox" />
+                Auto-read answers
+              </label>
+              <button id="toggleAutoSpeak" type="button" class="secondary-btn">Turn Auto-read Off</button>
+              <button id="stopSpeak" type="button" class="secondary-btn">Stop Audio</button>
+              <div id="ttsStatus" class="mic-status" aria-live="polite">TTS: idle</div>
+              <button id="newSession" type="button" class="secondary-btn">New Session</button>
+              <button id="send" type="submit">Send</button>
+            </div>
+          </form>
+        </section>
+      </section>
+
+      <section id="trajectoryView" class="view">
+        <section class="viz">
+          <div class="viz-head">
+            <h2>Learning Trajectory</h2>
+            <button id="refreshProgress" type="button">Refresh Progress</button>
+          </div>
+          <div class="viz-grid">
+            <div class="card">
+              <h3>Where You Are (Mastery)</h3>
+              <svg id="masteryChart" viewBox="0 0 640 260" role="img" aria-label="Mastery bar chart"></svg>
+            </div>
+            <div class="card">
+              <h3>Where You Have Been / Going (Quiz Trend)</h3>
+              <svg id="trendChart" viewBox="0 0 640 260" role="img" aria-label="Quiz trend chart"></svg>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section id="promptView" class="view">
+        <section class="controls">
+          <div class="row">
+            <label for="systemPrompt">System prompt</label>
+            <textarea id="systemPrompt" rows="14" placeholder="Optional system instruction"></textarea>
+          </div>
+          <div class="row row-inline">
+            <label class="check">
+              <input id="includeProfile" type="checkbox" checked />
+              Include profile.md context
+            </label>
+            <label class="check">
+              <input id="enableTools" type="checkbox" checked />
+              Enable model tools (YouTube recommender)
+            </label>
+            <button id="loadProfile" type="button">Preview profile</button>
+            <button id="clearChat" type="button">Clear</button>
+          </div>
+          <div class="row row-inline">
+            <label for="ttsVoice">Voice</label>
+            <select id="ttsVoice"></select>
+            <label for="ttsRate">Rate</label>
+            <input id="ttsRate" type="range" min="0.6" max="1.6" step="0.1" value="1" />
+            <span id="ttsRateValue">1.0</span>
+            <label for="ttsPitch">Pitch</label>
+            <input id="ttsPitch" type="range" min="0.6" max="1.6" step="0.1" value="1" />
+            <span id="ttsPitchValue">1.0</span>
+          </div>
+        </section>
       </section>
 
       <dialog id="profileDialog">

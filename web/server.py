@@ -6,14 +6,19 @@ from __future__ import annotations
 import json
 import os
 import re
+import sys
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib import error, parse, request
+from urllib import error, request
 
 ROOT = Path(__file__).resolve().parent.parent
 WEB_DIR = ROOT / "web"
 PROFILE_PATH = ROOT / "profile.md"
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from tools import youtube_recommender
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://127.0.0.1:11434")
 DEFAULT_MODEL = os.environ.get("OLLAMA_MODEL", "granite4:7b-a1b-h")
 HOST = os.environ.get("CHAT_HOST", "127.0.0.1")
@@ -52,43 +57,7 @@ def _as_bool(value, default: bool) -> bool:
 
 
 def _build_tools() -> list[dict]:
-    return [
-        {
-            "type": "function",
-            "function": {
-                "name": "recommend_youtube_videos",
-                "description": (
-                    "Recommend YouTube videos for a learning topic. "
-                    "Use this when the student asks for additional explanations, examples, or references."
-                ),
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "topic": {
-                            "type": "string",
-                            "description": "Primary concept the student wants to learn.",
-                        },
-                        "learning_goal": {
-                            "type": "string",
-                            "description": "Specific objective, like exam prep or project help.",
-                        },
-                        "learner_level": {
-                            "type": "string",
-                            "enum": ["beginner", "intermediate", "advanced"],
-                            "description": "Estimated student level.",
-                        },
-                        "max_results": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "maximum": 8,
-                            "description": "Number of recommendations to return.",
-                        },
-                    },
-                    "required": ["topic"],
-                },
-            },
-        }
-    ]
+    return [youtube_recommender.TOOL_SCHEMA]
 
 
 TOOLS = _build_tools()
@@ -104,95 +73,97 @@ PROFILE_SECTION_PRIORITY = [
 ]
 
 
-def _decode_duckduckgo_url(raw_href: str) -> str:
-    if not raw_href:
-        return ""
-    if raw_href.startswith("//"):
-        raw_href = f"https:{raw_href}"
-    parsed = parse.urlparse(raw_href)
-    qs = parse.parse_qs(parsed.query)
-    if "uddg" in qs and qs["uddg"]:
-        return parse.unquote(qs["uddg"][0])
-    return raw_href
+def _parse_markdown_table_rows(text: str, section_heading: str) -> list[dict[str, str]]:
+    marker = f"## {section_heading}"
+    start = text.find(marker)
+    if start < 0:
+        return []
+
+    section = text[start:]
+    lines = section.splitlines()[1:]
+    table_lines = []
+    in_table = False
+    for line in lines:
+        if line.startswith("## "):
+            break
+        if line.strip().startswith("|"):
+            in_table = True
+            table_lines.append(line.strip())
+        elif in_table and not line.strip():
+            break
+
+    if len(table_lines) < 2:
+        return []
+
+    headers = [h.strip() for h in table_lines[0].strip("|").split("|")]
+    rows: list[dict[str, str]] = []
+    for line in table_lines[2:]:
+        cols = [c.strip() for c in line.strip("|").split("|")]
+        if len(cols) != len(headers):
+            continue
+        rows.append(dict(zip(headers, cols)))
+    return rows
 
 
-def recommend_youtube_videos(args: dict) -> dict:
-    topic = (args.get("topic") or "").strip()
-    learning_goal = (args.get("learning_goal") or "").strip()
-    learner_level = (args.get("learner_level") or "beginner").strip().lower()
-    max_results = int(args.get("max_results") or 5)
-    max_results = max(1, min(max_results, 8))
-
-    if not topic:
-        return {"error": "topic is required"}
-
-    search_terms = f"site:youtube.com/watch {topic} {learning_goal} {learner_level} tutorial".strip()
-    search_url = f"https://duckduckgo.com/html/?q={parse.quote_plus(search_terms)}"
-    youtube_search_url = f"https://www.youtube.com/results?search_query={parse.quote_plus(topic)}"
-
+def _to_float(value: str) -> float | None:
+    cleaned = value.replace("%", "").strip()
     try:
-        req = request.Request(
-            search_url,
-            headers={
-                "User-Agent": (
-                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36"
-                )
-            },
-            method="GET",
-        )
-        with request.urlopen(req, timeout=20) as resp:
-            html = resp.read().decode("utf-8", errors="replace")
+        return float(cleaned)
+    except ValueError:
+        return None
 
-        # Extract DuckDuckGo result links and keep only YouTube watch links.
-        matches = re.findall(r'class="result__a"[^>]*href="([^"]+)"[^>]*>(.*?)</a>', html, flags=re.IGNORECASE)
-        recommendations = []
-        seen = set()
-        for href, title_html in matches:
-            final_url = _decode_duckduckgo_url(href)
-            if "youtube.com/watch" not in final_url and "youtu.be/" not in final_url:
-                continue
-            clean_url = final_url.split("&")[0]
-            if clean_url in seen:
-                continue
-            seen.add(clean_url)
-            clean_title = re.sub(r"<[^>]+>", "", title_html).strip()
-            recommendations.append({"title": clean_title, "url": clean_url})
-            if len(recommendations) >= max_results:
-                break
 
-        if not recommendations:
-            return {
+def parse_profile_progress(profile_text: str) -> dict:
+    mastery_rows = _parse_markdown_table_rows(profile_text, "Knowledge Mastery Map")
+    quiz_rows = _parse_markdown_table_rows(profile_text, "Quiz & Assessment Log")
+
+    mastery = []
+    for row in mastery_rows:
+        topic = row.get("Topic", "").strip()
+        mastery_value = _to_float(row.get("Mastery (0-100)", ""))
+        if not topic or mastery_value is None:
+            continue
+        mastery.append(
+            {
                 "topic": topic,
-                "learning_goal": learning_goal,
-                "learner_level": learner_level,
-                "recommendations": [],
-                "note": "No parsed results. Use the fallback YouTube search URL.",
-                "fallback_search_url": youtube_search_url,
+                "mastery": mastery_value,
+                "last_checked": row.get("Last Checked", ""),
+                "next_action": row.get("Next Action", ""),
             }
+        )
 
-        return {
-            "topic": topic,
-            "learning_goal": learning_goal,
-            "learner_level": learner_level,
-            "recommendations": recommendations,
-            "fallback_search_url": youtube_search_url,
-        }
-    except Exception as exc:  # pylint: disable=broad-except
-        return {
-            "topic": topic,
-            "learning_goal": learning_goal,
-            "learner_level": learner_level,
-            "recommendations": [],
-            "error": str(exc),
-            "fallback_search_url": youtube_search_url,
-        }
+    quiz_scores = []
+    for row in quiz_rows:
+        score_value = _to_float(row.get("Score", ""))
+        if score_value is None:
+            continue
+        quiz_scores.append(
+            {
+                "date": row.get("Date", ""),
+                "quiz_id": row.get("Quiz ID", ""),
+                "topic": row.get("Topic", ""),
+                "score": score_value,
+            }
+        )
+
+    return {
+        "mastery": mastery,
+        "quiz_scores": quiz_scores,
+        "target_mastery": 80,
+    }
 
 
 def execute_tool_call(name: str, arguments: dict) -> dict:
-    if name == "recommend_youtube_videos":
-        return recommend_youtube_videos(arguments)
+    if name == youtube_recommender.TOOL_NAME:
+        return youtube_recommender.recommend_youtube_videos(arguments)
     return {"error": f"unknown_tool: {name}"}
+
+
+def _latest_user_text(messages: list[dict]) -> str:
+    for msg in reversed(messages):
+        if msg.get("role") == "user":
+            return _message_content(msg).strip()
+    return ""
 
 
 def _message_content(msg: dict) -> str:
@@ -357,6 +328,12 @@ class Handler(BaseHTTPRequestHandler):
             if PROFILE_PATH.exists():
                 profile_text = PROFILE_PATH.read_text(encoding="utf-8")
             return self._json({"profile": profile_text})
+        if self.path == "/api/progress":
+            profile_text = ""
+            if PROFILE_PATH.exists():
+                profile_text = PROFILE_PATH.read_text(encoding="utf-8")
+            progress = parse_profile_progress(profile_text)
+            return self._json(progress)
         self.send_error(HTTPStatus.NOT_FOUND, "Not Found")
 
     def do_POST(self) -> None:  # noqa: N802
@@ -405,7 +382,38 @@ class Handler(BaseHTTPRequestHandler):
 
             outgoing_messages = [*system_messages, *compacted_messages]
 
-            parsed = chat_with_tools(model=model, messages=outgoing_messages, tools_enabled=tools_enabled)
+            forced_tool_used = False
+            latest_user_text = _latest_user_text(messages)
+            if tools_enabled and youtube_recommender.looks_like_youtube_request(latest_user_text):
+                derived_topic = youtube_recommender.derive_topic_from_text(latest_user_text)
+                if derived_topic == "general study topic":
+                    parsed = {
+                        "message": {
+                            "role": "assistant",
+                            "content": (
+                                "Please include the topic you want videos for, "
+                                "for example: `Recommend YouTube videos for algebra fundamentals`."
+                            ),
+                        }
+                    }
+                else:
+                    forced_tool_used = True
+                    forced_args = {
+                        "topic": derived_topic,
+                        "learner_level": "beginner",
+                        "max_results": 5,
+                    }
+                    tool_result = youtube_recommender.recommend_youtube_videos(forced_args)
+                    parsed = {
+                        "message": {
+                            "role": "assistant",
+                            "content": youtube_recommender.forced_youtube_content(tool_result),
+                        },
+                        "forced_tool": youtube_recommender.TOOL_NAME,
+                        "tool_result": tool_result,
+                    }
+            else:
+                parsed = chat_with_tools(model=model, messages=outgoing_messages, tools_enabled=tools_enabled)
 
             content = parsed.get("message", {}).get("content", "")
             self._json(
@@ -418,6 +426,7 @@ class Handler(BaseHTTPRequestHandler):
                         "profile_compacted": profile_compacted,
                         "conversation_compacted": conversation_compacted,
                         "recent_message_count": RECENT_MESSAGE_COUNT,
+                        "forced_tool_used": forced_tool_used,
                     },
                 }
             )
@@ -453,6 +462,9 @@ class Handler(BaseHTTPRequestHandler):
         content = path.read_bytes()
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", content_type)
+        self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
         self.send_header("Content-Length", str(len(content)))
         self.end_headers()
         self.wfile.write(content)
@@ -461,6 +473,7 @@ class Handler(BaseHTTPRequestHandler):
         content = json.dumps(payload).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
         self.send_header("Content-Length", str(len(content)))
         self.end_headers()
         self.wfile.write(content)

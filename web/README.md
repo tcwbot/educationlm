@@ -23,6 +23,18 @@ Then open:
 - Prefills the chat with a default adaptive tutoring system prompt aligned to the session workflow.
 - Supports model tool-calling with `recommend_youtube_videos` for extra learning resources.
 - Tool use can be toggled in UI (`Enable model tools`).
+- Deterministic fallback: clear YouTube/video requests force `recommend_youtube_videos` even if model tool-calling is missed.
+- Includes D3 visual tracking:
+  - Mastery chart (`where you are`)
+  - Quiz trend + projection (`where you've been / where you're going`)
+- Uses separate views for `Chat`, `Trajectory`, and `Prompt` (system prompt editor).
+- Supports browser speech-to-text in Chat view (`Start Mic`) using Web Speech API.
+- Supports browser text-to-speech for assistant answers:
+    - per-message `Speak` button
+    - `Auto-read answers` defaults to ON for new users
+    - `Turn Auto-read Off/On` toggle in Chat view
+    - `Stop Audio` immediately stops speech and disables auto-read
+    - voice selector + rate/pitch controls (saved locally in browser)
 
 ## Environment Variables
 - `OLLAMA_URL` (default `http://127.0.0.1:11434`)
@@ -37,6 +49,9 @@ Then open:
 
 ## Notes
 - Make sure Ollama is running before sending messages.
+- Keep `profile.md` updated so charts reflect current mastery and quiz history.
+- Microphone requires browser permission and Web Speech API support (best on Chrome/Edge).
+- Text-to-speech uses browser Speech Synthesis API and voice availability varies by OS/browser.
 - If the model is not pulled yet:
 ```bash
 ollama pull granite4:7b-a1b-h

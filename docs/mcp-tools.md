@@ -4,6 +4,7 @@ This project now supports model tool-calling in the chat backend for local Ollam
 
 ## Implemented Tool
 - `recommend_youtube_videos`
+  - implementation: `tools/youtube_recommender.py`
 
 ### Purpose
 When a student needs further understanding, the model can call this tool to fetch relevant YouTube learning resources.
